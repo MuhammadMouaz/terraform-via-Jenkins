@@ -7,37 +7,69 @@ pipeline {
     stages {
         stage('Terraform Init') {
             steps {
-                bat 'terraform init'
+                script {
+                    try {
+                        bat 'terraform init'
+                    } catch (err) {
+                        error "Terraform Init failed: ${err}"
+                    }
+                }
             }
         }
         stage('Terraform Plan') {
             steps {
-                bat '''
-                    terraform plan \
-                    -var "aws_access_key=$AWS_ACCESS_KEY_ID" \
-                    -var "aws_secret_key=$AWS_SECRET_ACCESS_KEY"
-                '''
+                script {
+                    try {
+                        bat '''
+                            terraform plan \
+                            -var "aws_access_key=$AWS_ACCESS_KEY_ID" \
+                            -var "aws_secret_key=$AWS_SECRET_ACCESS_KEY"
+                        '''
+                    } catch (err) {
+                        error "Terraform Plan failed: ${err}"
+                    }
+                }
             }
         }
         stage('Terraform Apply') {
             steps {
-                bat '''
-                    terraform apply \
-                    -var "aws_access_key=$AWS_ACCESS_KEY_ID" \
-                    -var "aws_secret_key=$AWS_SECRET_ACCESS_KEY" \
-                    -auto-approve
-                '''
+                script {
+                    try {
+                        bat '''
+                            terraform apply \
+                            -var "aws_access_key=$AWS_ACCESS_KEY_ID" \
+                            -var "aws_secret_key=$AWS_SECRET_ACCESS_KEY" \
+                            -auto-approve
+                        '''
+                    } catch (err) {
+                        error "Terraform Apply failed: ${err}"
+                    }
+                }
             }
         }
         stage('Terraform Destroy') {
             steps {
-                bat '''
-                    terraform destroy \
-                    -var "aws_access_key=$AWS_ACCESS_KEY_ID" \
-                    -var "aws_secret_key=$AWS_SECRET_ACCESS_KEY" \
-                    -auto-approve
-                '''
+                script {
+                    try {
+                        bat '''
+                            terraform destroy \
+                            -var "aws_access_key=$AWS_ACCESS_KEY_ID" \
+                            -var "aws_secret_key=$AWS_SECRET_ACCESS_KEY" \
+                            -auto-approve
+                        '''
+                    } catch (err) {
+                        error "Terraform Destroy failed: ${err}"
+                    }
+                }
             }
+        }
+    }
+    post {
+        always {
+            echo 'Pipeline execution completed'
+        }
+        failure {
+            echo 'One or more stages failed. Please review the logs.'
         }
     }
 }
